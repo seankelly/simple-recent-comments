@@ -50,6 +50,11 @@ class SimpleRecentComments extends \WP_Widget {
 			'callback' => 'cb_settings_field_template',
 			'default' => '</ul></li>',
 		),
+		'simple_recent_comments_shorten_shortcode' => array(
+			'title' => "Shortcodes to shorten",
+			'callback' => 'cb_settings_field_shortcode',
+			'default' => '',
+		),
 	);
 
 	public function __construct() {
@@ -161,6 +166,19 @@ class SimpleRecentComments extends \WP_Widget {
 		}
 	}
 
+	public static function cb_settings_field_shortcode($args) {
+		$option_id = $args['id'];
+		$option_value = \get_option($args['id']);
+		?>
+<textarea name="<?php echo $option_id ?>" id="<?php echo $option_id ?>" cols="72" rows="2"><?php echo $option_value ?></textarea>
+<details>
+  <summary>How to use</summary>
+  <p>Include each shortcode that should be completely shortened on a separate line. Each shortcode block will be replaced with the shortcode in uppercase.</p>
+  <p>For example, add "spoiler" on its own line to display "[spoiler]something spoilery[/spoiler]" in a comment as "SPOILER" in the widget.</p>
+  </details>
+<?php
+	}
+
 	public function form($instance) {
 		// Nothing to configure on the widget page.
 	}
@@ -194,6 +212,7 @@ class SimpleRecentComments extends \WP_Widget {
 		$group_comments = $this->get_option('simple_recent_comments_group_by_post');
 		$post_header_template = $this->get_option('simple_recent_comments_post_header_template');
 		$post_footer_template = $this->get_option('simple_recent_comments_post_footer_template');
+		$shortcodes = $this->process_shortcode_list();
 
 		$date_format = \get_option('date_format');
 		$time_format = \get_option('time_format');
@@ -224,7 +243,9 @@ class SimpleRecentComments extends \WP_Widget {
 			}
 
 			foreach ($groups[$group_id] as $comment) {
-				$excerpt = $this->comment_excerpt($comment->comment_content, $maximum_length);
+				$excerpt = $this->comment_excerpt(
+					$comment->comment_content, $maximum_length, $shortcodes
+				);
 
 				$patterns = array(
 					'/%comment_excerpt/',
@@ -322,8 +343,23 @@ class SimpleRecentComments extends \WP_Widget {
 		return $results;
 	}
 
-	private function comment_excerpt($comment_content, $maximum_length) {
+	private function comment_excerpt($comment_content, $maximum_length, $shortcodes) {
 		$excerpt = \wp_strip_all_tags($comment_content);
+
+		// Convert consecutive newlines into a single line for the excerpt.
+		$excerpt = preg_replace('/\R/', " ", $excerpt);
+
+		foreach ($shortcodes as $shortcode) {
+			$sc_pattern = $shortcode['re'];
+			$sc_replacement = $shortcode['code'];
+			$excerpt = preg_replace($sc_pattern, $sc_replacement, $excerpt);
+		}
+
+		// HTML will merge multiple whitespace characters together.
+		// Convert them all into a single space for the purposes of the
+		// widget.
+		$excerpt = preg_replace('/\s{2,}/', " ", $excerpt);
+
 		// Allow three extra characters because the excerpt will have
 		// an ellipsis appended to it.
 		if (mb_strlen($excerpt) > ($maximum_length + 3)) {
@@ -331,6 +367,30 @@ class SimpleRecentComments extends \WP_Widget {
 		}
 
 		return $excerpt;
+	}
+
+	private function process_shortcode_list() {
+		$shortcode_option = $this->get_option('simple_recent_comments_shorten_shortcode');
+		$shortcodes = array();
+		if (!$shortcode_option) {
+			return $shortcodes;
+		}
+
+		$shortcode_list = preg_split('/\R/', $shortcode_option);
+		if ($shortcode_list === false) {
+			return $shortcodes;
+		}
+
+		foreach ($shortcode_list as $shortcode) {
+			$shortcode = trim($shortcode);
+			$search = array(
+				're' => '/\[(' . $shortcode . ')\b(.*?)(?:(\/))?\](?:(.+?)\[\/\1\])?/',
+				'code' => mb_strtoupper($shortcode),
+			);
+			$shortcodes[] = $search;
+		}
+
+		return $shortcodes;
 	}
 }
 
