@@ -239,20 +239,21 @@ class SimpleRecentComments extends \WP_Widget {
 		$group_order = $grouped['order'];
 		$groups = $grouped['groups'];
 		foreach ($group_order as $group_id) {
-			$post_id = $groups[$group_id][0]->post_ID;
-			$post_title = $posts[$group_id]['title'];
-			$post_link = $posts[$group_id]['link'];
-			$post_patterns = array(
-				'/%post_link/',
-				'/%post_title/',
-			);
-
-			$post_replacements = array(
-				$post_link,
-				$post_title,
-			);
-
+			$post_patterns = array();
+			$post_replacements = array();
 			if ($group_comments) {
+				$post_id = $groups[$group_id][0]->post_ID;
+				$post_title = $posts[$post_id]['title'];
+				$post_link = $posts[$post_id]['link'];
+				$post_patterns = array(
+					'/%post_link/',
+					'/%post_title/',
+				);
+
+				$post_replacements = array(
+					$post_link,
+					$post_title,
+				);
 				$html .= preg_replace($post_patterns, $post_replacements, $post_header_template);
 			}
 
@@ -262,25 +263,33 @@ class SimpleRecentComments extends \WP_Widget {
 				);
 
 				$patterns = array(
-					'/%comment_excerpt/',
 					'/%comment_link/',
 					'/%comment_author/',
 					'/%comment_date/',
 					'/%comment_time/',
+					'/%post_link/',
+					'/%post_title/',
+					// Keep excerpt last so the comment
+					// content will not have anything
+					// replaced.
+					'/%comment_excerpt/',
 				) + $post_patterns;
 
 				$post_id = $comment->post_ID;
-				$post_link = $posts[$group_id]['link'];
+				$post_title = $posts[$post_id]['title'];
+				$post_link = $posts[$post_id]['link'];
 				$comment_link = "";
 				if ($post_link) {
 					$comment_link = $post_link . "#comment-{$comment->comment_ID}";
 				}
 				$replacements = array(
-					$excerpt,
 					$comment_link,
 					$comment->comment_author,
 					\mysql2date($date_format, $comment->comment_date),
 					\mysql2date($time_format, $comment->comment_date),
+					$post_link,
+					$post_title,
+					$excerpt,
 				) + $post_replacements;
 
 				$rendered = \preg_replace($patterns, $replacements, $comment_template);
@@ -336,7 +345,7 @@ class SimpleRecentComments extends \WP_Widget {
 
 			// Force every comment to be under post "0" if not grouped.
 			if (!$group_comments) {
-				$post_id = 0;
+				$post_id = "0";
 			}
 			if (!array_key_exists($post_id, $grouped)) {
 				$grouped[$post_id] = array();
