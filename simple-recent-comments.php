@@ -198,6 +198,7 @@ class SimpleRecentComments extends \WP_Widget {
 	}
 
 	public function widget($args, $instance) {
+		$title = apply_filters('widget_title', $instance['title']);
 		$content = \wp_cache_get(self::$cache_key, self::$cache_group);
 		if (!$content) {
 			$cached = "UNCACHED";
@@ -210,6 +211,9 @@ class SimpleRecentComments extends \WP_Widget {
 
 		extract($args, EXTR_SKIP);
 		echo $before_widget;
+		if ($title) {
+			echo $before_title . $title . $after_title;
+		}
 		echo "<!-- $cached -->\n" . $content;
 		echo $after_widget;
 	}
