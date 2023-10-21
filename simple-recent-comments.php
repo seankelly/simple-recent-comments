@@ -31,53 +31,35 @@ class SimpleRecentComments extends \WP_Widget {
 	private static $comments_section = 'src_comments_section';
 
 	private static $options = array(
-		array(
-			'id' => 'simple_recent_comments_number',
+		'simple_recent_comments_number' => array(
 			'title' => "Show the most recent comments",
-			'args' => array(
-				'type' => 'integer',
-				'default' => 10,
-			),
+			'callback' => 'cb_settings_field_integer',
+			'default' => 10,
 		),
-		array(
-			'id' => 'simple_recent_comments_maximum_length',
+		'simple_recent_comments_maximum_length' => array(
 			'title' => "Maximum comment length",
-			'args' => array(
-				'type' => 'integer',
-				'default' => 100,
-			),
+			'callback' => 'cb_settings_field_integer',
+			'default' => 100,
 		),
-		array(
-			'id' => 'simple_recent_comments_comment_template',
+		'simple_recent_comments_comment_template' => array(
 			'title' => "Comment template",
-			'args' => array(
-				'type' => 'string',
-				'default' => '<li><a href="%comment_link" title="%post_title">%comment_author</a>: %comment_excerpt</li>',
-			),
+			'callback' => 'cb_settings_field_template',
+			'default' => '<li><a href="%comment_link" title="%post_title">%comment_author</a>: %comment_excerpt</li>',
 		),
-		array(
-			'id' => 'simple_recent_comments_group_by_post',
+		'simple_recent_comments_group_by_post' => array(
 			'title' => "Group comments by post",
-			'args' => array(
-				'type' => 'boolean',
-				'default' => false,
-			),
+			'callback' => 'cb_settings_field_checkbox',
+			'default' => false,
 		),
-		array(
-			'id' => 'simple_recent_comments_post_header_template',
+		'simple_recent_comments_post_header_template' => array(
 			'title' => "Grouped post header template",
-			'args' => array(
-				'type' => 'string',
-				'default' => '<li>In response to <a href="%post_link" title="%post_title">%post_title</a><ul>',
-			),
+			'callback' => 'cb_settings_field_template',
+			'default' => '<li>In response to <a href="%post_link" title="%post_title">%post_title</a><ul>',
 		),
-		array(
-			'id' => 'simple_recent_comments_post_footer_template',
+		'simple_recent_comments_post_footer_template' => array(
 			'title' => "Grouped post footer template",
-			'args' => array(
-				'type' => 'string',
-				'default' => '</ul></li>',
-			),
+			'callback' => 'cb_settings_field_template',
+			'default' => '</ul></li>',
 		),
 	);
 
@@ -111,16 +93,18 @@ class SimpleRecentComments extends \WP_Widget {
 		// adding extra output from the section only adds clutter.
 		\add_settings_section(self::$comments_section, 'Simple Recent Comments', '', self::$menu_slug);
 
-		foreach (self::$options as $_key => $opt) {
+		foreach (self::$options as $id => $opt) {
 			\add_settings_field(
-				$opt['id'],
+				$id,
 				$opt['title'],
-				array(self::class, 'cb_settings_field'),
+				array(self::class, $opt['callback']),
 				self::$menu_slug,
 				self::$comments_section,
-				$opt
+				array(
+					'id' => $id,
+				)
 			);
-			\register_setting(self::$menu_slug, $opt['id'], $opt['args']);
+			\register_setting(self::$menu_slug, $id, array('default' => $opt['default']));
 		}
 	}
 
@@ -136,32 +120,27 @@ class SimpleRecentComments extends \WP_Widget {
 	<?php
 	}
 
-	public static function cb_settings_field($args) {
+	public static function cb_settings_field_checkbox($args) {
 		$option_id = $args['id'];
-		if (mb_strpos($option_id, 'template')) {
-			self::cb_settings_template($args);
-			return;
-		}
-
-		$option_value = get_option($args['id']);
-		$args_type = $args['args']['type'];
-		if ($args_type === 'boolean') {
-			$checked = \checked('on', $option_value, false);
-			echo "<input id='$option_id' name='$option_id' type='checkbox' $checked></input>";
-		}
-		elseif ($args_type === 'integer') {
-			echo "<input id='$option_id' name='$option_id' size='3' value='$option_value'></input>";
-		}
-		elseif ($args_type === 'string') {
-			?><textarea name="<?php echo $option_id ?>" id="<?php echo $option_id ?>" cols="72" rows="2"><?php echo $option_value ?></textarea><?php
-		}
+		$option_value = \get_option($option_id);
+		$checked = \checked('on', $option_value, false);
+		echo "<input id='$option_id' name='$option_id' type='checkbox' $checked></input>";
 	}
 
-	public static function cb_settings_template($args) {
+	public static function cb_settings_field_integer($args) {
 		$option_id = $args['id'];
-		$option_value = get_option($args['id']);
+		$option_value = \get_option($option_id);
+		echo "<input id='$option_id' name='$option_id' size='3' value='$option_value'></input>";
+	}
+
+	public static function cb_settings_field_template($args) {
+		$option_id = $args['id'];
+		$option_value = \get_option($args['id']);
 ?>
 <textarea name="<?php echo $option_id ?>" id="<?php echo $option_id ?>" cols="72" rows="2"><?php echo $option_value ?></textarea>
+<?php
+		if (strpos($option_id, '_comment_') !== false) {
+?>
 <details>
   <summary>Available tags to use in template.</summary>
   <div>
@@ -177,6 +156,20 @@ class SimpleRecentComments extends \WP_Widget {
   </div>
 </details>
 <?php
+		}
+		elseif (strpos($option_id, '_post_') !== false) {
+?>
+<details>
+  <summary>Available tags to use in template.</summary>
+  <div>
+    <ul>
+      <li><code>%post_title</code> - Title of the post.</li>
+      <li><code>%post_link</code> - Link to the post.</li>
+    </ul>
+  </div>
+</details>
+<?php
+		}
 	}
 
 	public function form($instance) {
@@ -200,13 +193,18 @@ class SimpleRecentComments extends \WP_Widget {
 		echo $after_widget;
 	}
 
+	// Simple wrapper to provide the default value.
+	private function get_option($option_id) {
+		return \get_option($option_id, self::$options[$option_id]['default']);
+	}
+
 	private function generate($instance) {
-		$comment_number = \get_option('simple_recent_comments_number');
-		$maximum_length = \get_option('simple_recent_comments_maximum_length');
-		$comment_template = \get_option('simple_recent_comments_comment_template');
-		$group_comments = \get_option('simple_recent_comments_group_by_post');
-		$post_header_template = \get_option('simple_recent_comments_post_header_template');
-		$post_footer_template = \get_option('simple_recent_comments_post_footer_template');
+		$comment_number = $this->get_option('simple_recent_comments_number');
+		$maximum_length = $this->get_option('simple_recent_comments_maximum_length');
+		$comment_template = $this->get_option('simple_recent_comments_comment_template');
+		$group_comments = $this->get_option('simple_recent_comments_group_by_post');
+		$post_header_template = $this->get_option('simple_recent_comments_post_header_template');
+		$post_footer_template = $this->get_option('simple_recent_comments_post_footer_template');
 
 		$date_format = \get_option('date_format');
 		$time_format = \get_option('time_format');
