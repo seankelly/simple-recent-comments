@@ -22,6 +22,11 @@ class SimpleRecentComments extends \WP_Widget {
 	);
 	 */
 
+	private static $cache_key = 'comment_cache';
+	private static $cache_group = 'simple_recent_comments';
+	// Automatically expire cache after 30 minutes.
+	private static $cache_expiration = 1800;
+
 	private static $menu_slug = 'simple-recent-comments';
 	private static $comments_section = 'src_comments_section';
 
@@ -183,7 +188,11 @@ class SimpleRecentComments extends \WP_Widget {
 	}
 
 	public function widget($args, $instance) {
-		$content = $this->generate($instance);
+		$content = \wp_cache_get(self::$cache_key, self::$cache_group);
+		if (!$content) {
+			$content = $this->generate($instance);
+			\wp_cache_set(self::$cache_key, $content, self::$cache_group, self::$cache_expiration);
+		}
 
 		extract($args, EXTR_SKIP);
 		echo $before_widget;
