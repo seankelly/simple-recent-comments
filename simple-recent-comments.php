@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin name: Simple Recent Comments
-Version: 0.1
+Version: 0.3
 Description: Plugin for displaying recent commits in a widget.
 Author: sean
 Author URI:
