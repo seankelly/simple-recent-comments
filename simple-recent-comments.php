@@ -180,11 +180,21 @@ class SimpleRecentComments extends \WP_Widget {
 	}
 
 	public function form($instance) {
-		// Nothing to configure on the widget page.
+		$defaults = array(
+			'title' => 'Recent Comments',
+		);
+
+		$instance = wp_parse_args((array) $instance, $defaults);
+?>
+<p>
+    <label for="<?php echo $this->get_field_id('title'); ?>">Title</label>
+    <input id="<?php echo $this->get_field_id('title'); ?>" class="widefat" name="<?php echo $this->get_field_name('title'); ?>" value="<?php echo $instance['title']; ?>" />
+</p>
+<?php
 	}
 
 	public function update($new_instance, $old_instance) {
-		// Nothing to update on the widget page.
+		return $new_instance;
 	}
 
 	public function widget($args, $instance) {
