@@ -11,17 +11,6 @@ namespace WGOM;
 
 class SimpleRecentComments extends \WP_Widget {
 
-	/*
-	private static $option_key = 'simple-recent-comments';
-	private static $options = array(
-		'number-comments' => 10,
-		'maximum-length' => 120,
-		'group-comments' => false,
-		'comment-template' => "",
-		'shortcodes' => [],
-	);
-	 */
-
 	private static $cache_key = 'comment_cache';
 	private static $cache_group = 'simple_recent_comments';
 	// Automatically expire cache after 30 minutes.
@@ -212,9 +201,7 @@ class SimpleRecentComments extends \WP_Widget {
 		$html = "<ul>";
 		$output = "";
 		$results = $this->fetch_comments($comment_number, $group_comments);
-		//$html .= '<pre>' . var_export($results, true) . '</pre>';
 		$grouped = $this->group_by_post($results, $group_comments);
-		//$html .=  '<pre>' . var_export($grouped, true) . '</pre>';
 		$posts = $grouped['posts'];
 		$group_order = $grouped['order'];
 		$groups = $grouped['groups'];
@@ -285,7 +272,7 @@ class SimpleRecentComments extends \WP_Widget {
 			"ORDER BY comment_date_gmt DESC " .
 			"LIMIT $comment_number"
 		);
-		echo "<!-- query: {$query} -->";
+		//echo "<!-- query: {$query} -->";
 		$results = $wpdb->get_results($query);
 		return $results;
 	}
