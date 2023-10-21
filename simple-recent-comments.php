@@ -200,13 +200,17 @@ class SimpleRecentComments extends \WP_Widget {
 	public function widget($args, $instance) {
 		$content = \wp_cache_get(self::$cache_key, self::$cache_group);
 		if (!$content) {
+			$cached = "UNCACHED";
 			$content = $this->generate($instance);
 			\wp_cache_set(self::$cache_key, $content, self::$cache_group, self::$cache_expiration);
+		}
+		else {
+			$cached = "CACHED";
 		}
 
 		extract($args, EXTR_SKIP);
 		echo $before_widget;
-		echo $content;
+		echo "<!-- $cached -->\n" . $content;
 		echo $after_widget;
 	}
 
