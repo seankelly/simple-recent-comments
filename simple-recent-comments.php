@@ -65,6 +65,7 @@ class SimpleRecentComments extends \WP_Widget {
 
 		\add_action('admin_init', array(self::class, 'add_settings'));
 		\add_action('admin_menu', array(self::class, 'menu_init'));
+		\add_action('comment_post', array(self::class, 'clear_cache'), 90, 2);
 	}
 
 	public function __destruct() {
@@ -98,6 +99,13 @@ class SimpleRecentComments extends \WP_Widget {
 				)
 			);
 			\register_setting(self::$menu_slug, $id, array('default' => $opt['default']));
+		}
+	}
+
+	// Clear the widget's cache when a comment is posted to force it to regenerate.
+	public static function clear_cache($comment_ID, $comment_approved) {
+		if ($comment_approved === 1) {
+			\wp_cache_delete(self::$cache_key, self::$cache_group);
 		}
 	}
 
