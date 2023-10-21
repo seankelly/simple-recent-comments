@@ -59,7 +59,6 @@ class SimpleRecentComments extends \WP_Widget {
 
 	public function __construct() {
 		$widget_ops = array(
-			'classname' => 'Simple Recent Comments',
 			'description' => 'Display recent comments'
 		);
 		parent::__construct('simple-recent-comments', 'Simple Recent Comments', $widget_ops);
