@@ -257,15 +257,15 @@ class SimpleRecentComments extends \WP_Widget {
 				$post_title = $posts[$post_id]['title'];
 				$post_link = $posts[$post_id]['link'];
 				$post_patterns = array(
-					'/%post_link/',
-					'/%post_title/',
+					'%post_link',
+					'%post_title',
 				);
 
 				$post_replacements = array(
 					$post_link,
 					$post_title,
 				);
-				$html .= preg_replace($post_patterns, $post_replacements, $post_header_template);
+				$html .= str_replace($post_patterns, $post_replacements, $post_header_template);
 			}
 
 			foreach ($groups[$group_id] as $comment) {
@@ -308,7 +308,7 @@ class SimpleRecentComments extends \WP_Widget {
 			}
 
 			if ($group_comments) {
-				$html .= preg_replace($post_patterns, $post_replacements, $post_footer_template);
+				$html .= str_replace($post_patterns, $post_replacements, $post_footer_template);
 			}
 		}
 
