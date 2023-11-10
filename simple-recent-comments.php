@@ -274,16 +274,16 @@ class SimpleRecentComments extends \WP_Widget {
 				);
 
 				$patterns = array(
-					'/%comment_link/',
-					'/%comment_author/',
-					'/%comment_date/',
-					'/%comment_time/',
-					'/%post_link/',
-					'/%post_title/',
+					'%comment_link',
+					'%comment_author',
+					'%comment_date',
+					'%comment_time',
+					'%post_link',
+					'%post_title',
 					// Keep excerpt last so the comment
 					// content will not have anything
 					// replaced.
-					'/%comment_excerpt/',
+					'%comment_excerpt',
 				) + $post_patterns;
 
 				$post_id = $comment->post_ID;
@@ -303,7 +303,7 @@ class SimpleRecentComments extends \WP_Widget {
 					$excerpt,
 				) + $post_replacements;
 
-				$rendered = \preg_replace($patterns, $replacements, $comment_template);
+				$rendered = str_replace($patterns, $replacements, $comment_template);
 				$html .= $rendered;
 			}
 
